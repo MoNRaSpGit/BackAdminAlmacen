@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import pingRoutes from "./routes/pingRoutes.js"; // 👈 ESTA LÍNEA FALTABA
+import pingRoutes from "./routes/pingRoutes.js";
 
 const app = express();
 

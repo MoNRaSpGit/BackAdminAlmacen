@@ -1,16 +1,17 @@
-import express from 'express';
-import cors from 'cors';
+import express from "express";
+import cors from "cors";
+import pingRoutes from "./routes/pingRoutes.js"; // 👈 ESTA LÍNEA FALTABA
 
 const app = express();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
+
+// Rutas
 app.use("/api/ping", pingRoutes);
 
-// Ruta de prueba
-app.get('/', (req, res) => {
-  res.send('✅ API de BackAdminAlmacen funcionando');
+app.get("/", (req, res) => {
+  res.send("✅ API de BackAdminAlmacen funcionando");
 });
 
 export default app;

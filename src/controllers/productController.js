@@ -1,6 +1,25 @@
 import { pool } from "../config/db.js";
 import stringSimilarity from "string-similarity";
 
+
+
+/**
+ * Normaliza un texto:
+ * - pasa a minúsculas
+ * - elimina tildes
+ * - elimina caracteres especiales
+ */
+function normalizeText(text) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")              // separa acentos
+    .replace(/[\u0300-\u036f]/g, "") // borra acentos
+    .replace(/[^a-z0-9\s]/g, "")     // borra caracteres raros
+    .trim();
+}
+
+
+
 /**
  * Obtener todos los productos
  */
@@ -76,16 +95,17 @@ export async function getFilteredProducts(req, res) {
 
 
 
-
 /**
  * Buscar matches entre products (price=999/0) y productos_aux
  */
 export async function getProductMatches(req, res) {
   try {
+    // 1. Traemos los productos originales que necesitan actualización
     const [productosPendientes] = await pool.query(
-      "SELECT id, name, price, image, barcode, description FROM products WHERE price = 999 OR price = 0"
+      "SELECT id, name, price FROM products WHERE price = 999 OR price = 0"
     );
 
+    // 2. Traemos los productos auxiliares
     const [productosAux] = await pool.query(
       "SELECT id, name, price FROM productos_aux"
     );
@@ -93,23 +113,25 @@ export async function getProductMatches(req, res) {
     let resultados = [];
 
     for (const prod of productosPendientes) {
-      const nombresAux = productosAux.map((p) => p.name);
-      const match = stringSimilarity.findBestMatch(prod.name, nombresAux);
+      const nombresAux = productosAux.map((p) => normalizeText(p.name));
+      const match = stringSimilarity.findBestMatch(normalizeText(prod.name), nombresAux);
 
       const best = match.bestMatch;
       const bestIndex = match.bestMatchIndex;
       const similitud = best.rating;
 
-      const candidato = productosAux[bestIndex];
+      if (similitud >= 0.7) { // 👈 umbral mínimo
+        const candidato = productosAux[bestIndex];
 
-      resultados.push({
-        product_id: prod.id,           // 👈 antes era "id"
-        product_name: prod.name,       // 👈 antes era "producto_actual"
-        product_price: prod.price,     // 👈 antes era "old_precio"
-        aux_name: candidato.name,      // 👈 antes era "candidato"
-        aux_price: candidato.price,    // 👈 antes era "nuevo_precio"
-        score: similitud,              // 👈 lo devolvemos 0..1 y el front ya hace *100
-      });
+        resultados.push({
+          product_id: prod.id,
+          product_name: prod.name,
+          product_price: prod.price,
+          aux_name: candidato.name,
+          aux_price: candidato.price,
+          score: similitud, // 0..1 (el front lo muestra en %)
+        });
+      }
     }
 
     res.json(resultados);
@@ -118,4 +140,3 @@ export async function getProductMatches(req, res) {
     res.status(500).json({ error: "Error generando matches", details: err.message });
   }
 }
-

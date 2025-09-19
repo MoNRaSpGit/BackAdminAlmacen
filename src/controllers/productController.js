@@ -1,3 +1,4 @@
+
 import { pool } from "../config/db.js";
 
 export async function getProducts(req, res) {
@@ -9,3 +10,28 @@ export async function getProducts(req, res) {
     res.status(500).json({ error: "Error al obtener productos" });
   }
 }
+
+export async function updateProduct(req, res) {
+  const { id } = req.params;
+  const { name, price } = req.body;
+
+  try {
+    // Traemos el producto actual
+    const [rows] = await pool.query("SELECT name, price FROM products WHERE id = ?", [id]);
+    if (rows.length === 0) return res.status(404).json({ error: "Producto no encontrado" });
+
+    const current = rows[0];
+
+    // Si no llega name o price, usamos el actual
+    const newName = name || current.name;
+    const newPrice = price || current.price;
+
+    await pool.query("UPDATE products SET name=?, price=? WHERE id=?", [newName, newPrice, id]);
+
+    res.json({ id, name: newName, price: newPrice });
+  } catch (err) {
+    console.error("❌ Error actualizando producto:", err);
+    res.status(500).json({ error: "Error al actualizar producto" });
+  }
+}
+

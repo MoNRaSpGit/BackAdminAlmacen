@@ -1,4 +1,5 @@
 import { pool } from "../config/db.js";
+import stringSimilarity from "string-similarity";
 
 /**
  * Obtener todos los productos
@@ -74,8 +75,7 @@ export async function getFilteredProducts(req, res) {
 }
 
 
-import stringSimilarity from "string-similarity";
-import { pool } from "../config/db.js";
+
 
 /**
  * Buscar matches entre products (price=999/0) y productos_aux

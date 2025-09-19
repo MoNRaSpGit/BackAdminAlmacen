@@ -23,7 +23,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^5.1.0",
-    "mysql2": "^3.14.3"
+    "mysql2": "^3.14.3",
+    "string-similarity": "^4.0.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

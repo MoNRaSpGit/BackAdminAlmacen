@@ -82,39 +82,33 @@ export async function getFilteredProducts(req, res) {
  */
 export async function getProductMatches(req, res) {
   try {
-    // 1. Traemos los productos originales que necesitan actualización
     const [productosPendientes] = await pool.query(
       "SELECT id, name, price, image, barcode, description FROM products WHERE price = 999 OR price = 0"
     );
 
-    // 2. Traemos los productos auxiliares
     const [productosAux] = await pool.query(
       "SELECT id, name, price FROM productos_aux"
     );
 
     let resultados = [];
 
-    // 3. Para cada producto pendiente, buscamos el mejor match
     for (const prod of productosPendientes) {
       const nombresAux = productosAux.map((p) => p.name);
       const match = stringSimilarity.findBestMatch(prod.name, nombresAux);
 
       const best = match.bestMatch;
       const bestIndex = match.bestMatchIndex;
-      const similitud = best.rating; // 0 a 1
+      const similitud = best.rating;
 
       const candidato = productosAux[bestIndex];
 
       resultados.push({
-        id: prod.id,
-        producto_actual: prod.name,
-        candidato: candidato.name,
-        score: (similitud * 100).toFixed(1), // porcentaje
-        nuevo_precio: candidato.price,
-        old_precio: prod.price,
-        barcode: prod.barcode,
-        image: prod.image,
-        description: prod.description,
+        product_id: prod.id,           // 👈 antes era "id"
+        product_name: prod.name,       // 👈 antes era "producto_actual"
+        product_price: prod.price,     // 👈 antes era "old_precio"
+        aux_name: candidato.name,      // 👈 antes era "candidato"
+        aux_price: candidato.price,    // 👈 antes era "nuevo_precio"
+        score: similitud,              // 👈 lo devolvemos 0..1 y el front ya hace *100
       });
     }
 

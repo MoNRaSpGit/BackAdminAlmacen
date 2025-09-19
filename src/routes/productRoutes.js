@@ -1,9 +1,14 @@
 import { Router } from "express";
-import { getProducts, updateProduct } from "../controllers/productController.js";
+import {
+  getProducts,
+  updateProduct,
+  getFilteredProducts,
+} from "../controllers/productController.js";
 
 const router = Router();
 
 router.get("/", getProducts);
-router.put("/:id", updateProduct); // 👈 ruta para editar
+router.get("/filtrados", getFilteredProducts); // 👈 nueva ruta
+router.put("/:id", updateProduct);
 
 export default router;

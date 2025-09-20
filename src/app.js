@@ -7,11 +7,14 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use("/api/products", productRoutes);
 
-// Rutas
+// ✅ Montamos las rutas de productos bajo /api
+app.use("/api", productRoutes);
+
+// ✅ Ruta ping
 app.use("/api/ping", pingRoutes);
 
+// ✅ Ruta raíz
 app.get("/", (req, res) => {
   res.send("✅ API de BackAdminAlmacen funcionando");
 });

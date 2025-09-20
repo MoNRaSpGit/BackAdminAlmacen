@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Montamos las rutas de productos bajo /api
+// ✅ Montamos todas las rutas de productos bajo /api
 app.use("/api", productRoutes);
 
 // ✅ Ruta ping

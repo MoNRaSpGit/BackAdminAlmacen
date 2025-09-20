@@ -3,14 +3,18 @@ import {
   getProducts,
   updateProduct,
   getFilteredProducts,
-  getProductMatches,   // 👈 importamos
+  addProduct,
+  getProductsConBarcode ,
+
+
 } from "../controllers/productController.js";
 
 const router = Router();
 
 router.get("/", getProducts);
 router.get("/filtrados", getFilteredProducts);
-router.get("/matches", getProductMatches);   // 👈 nueva ruta
+router.post("/", addProduct);
 router.put("/:id", updateProduct);
+router.get("/products/barcode", getProductsConBarcode);
 
 export default router;

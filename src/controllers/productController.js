@@ -95,48 +95,45 @@ export async function getFilteredProducts(req, res) {
 
 
 
-/**
- * Buscar matches entre products (price=999/0) y productos_aux
- */
-export async function getProductMatches(req, res) {
+
+
+
+
+export async function addProduct(req, res) {
+  const { name, price, description } = req.body;
+
   try {
-    // 1. Traemos los productos originales que necesitan actualización
-    const [productosPendientes] = await pool.query(
-      "SELECT id, name, price FROM products WHERE price = 999 OR price = 0"
+    const [result] = await pool.query(
+      `INSERT INTO products (name, price, description, status) 
+       VALUES (?, ?, ?, 'pendiente')`,
+      [name, price || 0, description || ""]
     );
 
-    // 2. Traemos los productos auxiliares
-    const [productosAux] = await pool.query(
-      "SELECT id, name, price FROM productos_aux"
-    );
-
-    let resultados = [];
-
-    for (const prod of productosPendientes) {
-      const nombresAux = productosAux.map((p) => normalizeText(p.name));
-      const match = stringSimilarity.findBestMatch(normalizeText(prod.name), nombresAux);
-
-      const best = match.bestMatch;
-      const bestIndex = match.bestMatchIndex;
-      const similitud = best.rating;
-
-      if (similitud >= 0.7) { // 👈 umbral mínimo
-        const candidato = productosAux[bestIndex];
-
-        resultados.push({
-          product_id: prod.id,
-          product_name: prod.name,
-          product_price: prod.price,
-          aux_name: candidato.name,
-          aux_price: candidato.price,
-          score: similitud, // 0..1 (el front lo muestra en %)
-        });
-      }
-    }
-
-    res.json(resultados);
+    res.json({
+      id: result.insertId,
+      name,
+      price: price || 0,
+      description: description || "",
+      status: "pendiente",
+    });
   } catch (err) {
-    console.error("❌ Error generando matches:", err);
-    res.status(500).json({ error: "Error generando matches", details: err.message });
+    console.error("❌ Error agregando producto:", err);
+    res.status(500).json({ error: "Error al agregar producto" });
+  }
+}
+
+
+export async function getProductsConBarcode(req, res) {
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, name, price, barcode, description, status
+       FROM products
+       WHERE barcode IS NOT NULL 
+         AND TRIM(barcode) <> ''`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ Error consultando productos con código de barra:", err);
+    res.status(500).json({ error: "Error al obtener productos con código de barra" });
   }
 }

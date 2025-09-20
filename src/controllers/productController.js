@@ -100,27 +100,27 @@ export async function getFilteredProducts(req, res) {
 
 
 export async function addProduct(req, res) {
-  const { name, price, description } = req.body;
+  const { name, price, barcode, description } = req.body;
 
   try {
     const [result] = await pool.query(
-      `INSERT INTO products (name, price, description, status) 
-       VALUES (?, ?, ?, 'pendiente')`,
-      [name, price || 0, description || ""]
+      "INSERT INTO products (name, price, barcode, description) VALUES (?, ?, ?, ?)",
+      [name, price || 0, barcode || null, description || null]
     );
 
-    res.json({
+    res.status(201).json({
       id: result.insertId,
       name,
-      price: price || 0,
-      description: description || "",
-      status: "pendiente",
+      price,
+      barcode,
+      description,
     });
   } catch (err) {
-    console.error("❌ Error agregando producto:", err);
-    res.status(500).json({ error: "Error al agregar producto" });
+    console.error("❌ Error insertando producto:", err);
+    res.status(500).json({ error: "Error al insertar producto" });
   }
 }
+
 
 
 export async function getProductsConBarcode(req, res) {

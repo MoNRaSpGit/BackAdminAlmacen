@@ -9,19 +9,19 @@ import {
 
 const router = Router();
 
-// Todos los productos
+// 👉 Queda /api/products
 router.get("/", getProducts);
 
-// Productos filtrados (ejemplo: precio > 500 o = 0)
+// 👉 Queda /api/products/filtrados
 router.get("/filtrados", getFilteredProducts);
 
-// Productos que sí tienen barcode
+// 👉 Queda /api/products/barcode
 router.get("/barcode", getProductsConBarcode);
 
-// Actualizar producto
+// 👉 Queda /api/products/:id
 router.put("/:id", updateProduct);
 
-// Agregar producto nuevo
+// 👉 Queda /api/products
 router.post("/", addProduct);
 
 export default router;

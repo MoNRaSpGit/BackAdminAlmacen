@@ -156,3 +156,25 @@ export async function getNotUpdatedProducts(req, res) {
   }
 }
 
+
+// ✅ Buscar producto por código de barras
+export async function getProductByBarcode(req, res) {
+  const { barcode } = req.params;
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, name, price, barcode, image, description FROM products WHERE barcode = ?",
+      [barcode]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Producto no encontrado" });
+    }
+
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("❌ Error consultando producto por código:", err);
+    res.status(500).json({ error: "Error al obtener producto por código" });
+  }
+}
+
+

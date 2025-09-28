@@ -5,7 +5,8 @@ import {
   getFilteredProducts,
   getProductsConBarcode,
   addProduct,
-  getNotUpdatedProducts 
+  getNotUpdatedProducts,
+   getProductByBarcode
 } from "../controllers/productController.js";
 
 const router = Router();
@@ -26,5 +27,7 @@ router.put("/:id", updateProduct);
 router.post("/", addProduct);
 
 router.get("/not-updated", getNotUpdatedProducts);
+
+router.get("/by-barcode/:barcode", getProductByBarcode);
 
 export default router;

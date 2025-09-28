@@ -137,3 +137,22 @@ export async function getProductsConBarcode(req, res) {
     res.status(500).json({ error: "Error al obtener productos con código de barra" });
   }
 }
+
+// Obtener productos NO actualizados
+export async function getNotUpdatedProducts(req, res) {
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, name, price, barcode, description, updated_at 
+       FROM products
+       WHERE (barcode IS NULL OR TRIM(barcode) = '')
+          OR price = 999
+          OR price = 0
+          OR name LIKE '%(CH)%'`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ Error consultando productos no actualizados:", err);
+    res.status(500).json({ error: "Error al obtener productos no actualizados" });
+  }
+}
+

@@ -4,7 +4,8 @@ import {
   updateProduct,
   getFilteredProducts,
   getProductsConBarcode,
-  addProduct
+  addProduct,
+  getNotUpdatedProducts 
 } from "../controllers/productController.js";
 
 const router = Router();
@@ -23,5 +24,7 @@ router.put("/:id", updateProduct);
 
 // 👉 Queda /api/products
 router.post("/", addProduct);
+
+router.get("/not-updated", getNotUpdatedProducts);
 
 export default router;

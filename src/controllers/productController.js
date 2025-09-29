@@ -1,7 +1,4 @@
 import { pool } from "../config/db.js";
-import stringSimilarity from "string-similarity";
-
-
 
 /**
  * Normaliza un texto:
@@ -18,8 +15,6 @@ function normalizeText(text) {
     .trim();
 }
 
-
-
 /**
  * Obtener todos los productos
  */
@@ -35,7 +30,6 @@ export async function getProducts(req, res) {
   }
 }
 
-
 /**
  * Actualizar producto (nombre y precio)
  */
@@ -46,7 +40,7 @@ export async function updateProduct(req, res) {
   try {
     // Traemos el producto actual
     const [rows] = await pool.query(
-      "SELECT name, price FROM products WHERE id = ?",
+      "SELECT name, price FROM productos_test WHERE id = ?",
       [id]
     );
     if (rows.length === 0)
@@ -58,7 +52,7 @@ export async function updateProduct(req, res) {
     const newName = name || current.name;
     const newPrice = price || current.price;
 
-    await pool.query("UPDATE products SET name=?, price=? WHERE id=?", [
+    await pool.query("UPDATE productos_test SET name=?, price=? WHERE id=?", [
       newName,
       newPrice,
       id,
@@ -66,10 +60,8 @@ export async function updateProduct(req, res) {
 
     res.json({ id, name: newName, price: newPrice });
   } catch (err) {
-    console.error("❌ Error actualizando producto:", err);
-    res
-      .status(500)
-      .json({ error: "Error al actualizar producto", details: err.message });
+    console.error("❌ Error actualizando producto (productos_test):", err);
+    res.status(500).json({ error: "Error al actualizar producto", details: err.message });
   }
 }
 
@@ -80,32 +72,27 @@ export async function getFilteredProducts(req, res) {
   try {
     const [rows] = await pool.query(
       `SELECT id, name, price, barcode, description 
-       FROM products 
+       FROM productos_test
        WHERE barcode IS NOT NULL 
          AND TRIM(barcode) <> '' 
          AND (price > 500 OR price = 0)`
     );
     res.json(rows);
   } catch (err) {
-    console.error("❌ Error consultando productos filtrados:", err);
-    res
-      .status(500)
-      .json({ error: "Error al obtener productos filtrados", details: err.message });
+    console.error("❌ Error consultando productos filtrados (productos_test):", err);
+    res.status(500).json({ error: "Error al obtener productos filtrados", details: err.message });
   }
 }
 
-
-
-
-
-
-
+/**
+ * Insertar producto nuevo
+ */
 export async function addProduct(req, res) {
   const { name, price, barcode, description } = req.body;
 
   try {
     const [result] = await pool.query(
-      "INSERT INTO products (name, price, barcode, description) VALUES (?, ?, ?, ?)",
+      "INSERT INTO productos_test (name, price, barcode, description) VALUES (?, ?, ?, ?)",
       [name, price || 0, barcode || null, description || null]
     );
 
@@ -117,30 +104,32 @@ export async function addProduct(req, res) {
       description,
     });
   } catch (err) {
-    console.error("❌ Error insertando producto:", err);
+    console.error("❌ Error insertando producto (productos_test):", err);
     res.status(500).json({ error: "Error al insertar producto" });
   }
 }
 
-
-
+/**
+ * Obtener productos que tienen código de barra
+ */
 export async function getProductsConBarcode(req, res) {
   try {
     const [rows] = await pool.query(
       `SELECT id, name, price, barcode, description, status
-       FROM products
+       FROM productos_test
        WHERE barcode IS NOT NULL 
          AND TRIM(barcode) <> ''`
     );
     res.json(rows);
   } catch (err) {
-    console.error("❌ Error consultando productos con código de barra:", err);
+    console.error("❌ Error consultando productos con código de barra (productos_test):", err);
     res.status(500).json({ error: "Error al obtener productos con código de barra" });
   }
 }
 
-// Obtener productos NO actualizados
-// Obtener productos NO actualizados (pero con código de barra)
+/**
+ * Obtener productos NO actualizados (pero con código de barra)
+ */
 export async function getNotUpdatedProducts(req, res) {
   try {
     const [rows] = await pool.query(
@@ -156,16 +145,14 @@ export async function getNotUpdatedProducts(req, res) {
   }
 }
 
-
-
-
-
-// ✅ Buscar producto por código de barras
+/**
+ * Buscar producto por código de barras
+ */
 export async function getProductByBarcode(req, res) {
   const { barcode } = req.params;
   try {
     const [rows] = await pool.query(
-      "SELECT id, name, price, barcode, image, description FROM products WHERE barcode = ?",
+      "SELECT id, name, price, barcode, image, description FROM productos_test WHERE barcode = ?",
       [barcode]
     );
 
@@ -175,9 +162,7 @@ export async function getProductByBarcode(req, res) {
 
     res.json(rows[0]);
   } catch (err) {
-    console.error("❌ Error consultando producto por código:", err);
+    console.error("❌ Error consultando producto por código (productos_test):", err);
     res.status(500).json({ error: "Error al obtener producto por código" });
   }
 }
-
-

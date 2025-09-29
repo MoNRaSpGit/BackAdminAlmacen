@@ -23,7 +23,18 @@ function normalizeText(text) {
 /**
  * Obtener todos los productos
  */
-getProducts
+export async function getProducts(req, res) {
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, name, price, barcode, description, status, updated_at FROM productos_test"
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ Error consultando productos (productos_test):", err);
+    res.status(500).json({ error: "Error al obtener productos" });
+  }
+}
+
 
 /**
  * Actualizar producto (nombre y precio)

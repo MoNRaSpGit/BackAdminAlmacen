@@ -144,21 +144,18 @@ export async function getNotUpdatedProducts(req, res) {
   try {
     const [rows] = await pool.query(
       `SELECT id, name, price, barcode, description, updated_at 
-       FROM products
-       WHERE barcode IS NOT NULL 
-         AND TRIM(barcode) <> '' 
-         AND (
-              price = 999
-              OR price = 0
-              OR LOWER(name) LIKE '%(ch)%'
-         )`
+       FROM productos_test
+       WHERE (barcode IS NOT NULL AND TRIM(barcode) <> '') -- 👈 solo con código
+         AND (price = 999 OR price = 0 OR name LIKE '%(CH)%')`
     );
     res.json(rows);
   } catch (err) {
-    console.error("❌ Error consultando productos no actualizados:", err);
+    console.error("❌ Error consultando productos no actualizados (productos_test):", err);
     res.status(500).json({ error: "Error al obtener productos no actualizados" });
   }
 }
+
+
 
 
 

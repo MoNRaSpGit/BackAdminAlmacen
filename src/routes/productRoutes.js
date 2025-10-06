@@ -9,7 +9,7 @@ import {
    getProductByBarcode
 } from "../controllers/productController.js";
 
-import { getProveedores } from "./controllers/proveedoresController.js";
+import { getProveedores } from "../controllers/proveedoresController.js";
 
 
 const router = Router();

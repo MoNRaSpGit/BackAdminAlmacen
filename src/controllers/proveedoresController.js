@@ -38,8 +38,7 @@ export async function asignarProductosAProveedor(req, res) {
 }
 
 
-// src/controllers/proveedoresController.js
-import { pool } from "../config/db.js";
+
 
 // Productos que aún no tienen proveedor
 export async function getProductosSinProveedor(req, res) {

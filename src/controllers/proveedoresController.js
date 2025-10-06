@@ -44,10 +44,9 @@ export async function asignarProductosAProveedor(req, res) {
 export async function getProductosSinProveedor(req, res) {
   try {
     const [rows] = await pool.query(`
-      SELECT p.id, p.name, p.price, p.barcode, p.description
+      SELECT p.id, p.name, p.price, p.barcode, p.description, p.image
       FROM productos_test p
-      LEFT JOIN productos_test_proveedores r
-        ON r.producto_id = p.id
+      LEFT JOIN productos_test_proveedores r ON r.producto_id = p.id
       WHERE r.producto_id IS NULL
       ORDER BY p.name ASC
     `);
@@ -57,4 +56,5 @@ export async function getProductosSinProveedor(req, res) {
     res.status(500).json({ error: "Error al obtener productos sin proveedor" });
   }
 }
+
 

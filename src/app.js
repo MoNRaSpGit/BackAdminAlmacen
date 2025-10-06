@@ -3,6 +3,10 @@ import cors from "cors";
 import productRoutes from "./routes/productRoutes.js";
 import proveedorRoutes from "./routes/proveedorRoutes.js";
 
+
+
+
+
 const app = express();
 
 // middlewares

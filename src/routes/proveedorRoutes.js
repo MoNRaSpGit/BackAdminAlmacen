@@ -1,10 +1,12 @@
-// src/routes/proveedorRoutes.js
 import { Router } from "express";
-import { getProveedores } from "../controllers/proveedoresController.js";
+import { getProveedores, asignarProductosAProveedor } from "../controllers/proveedoresController.js";
 
 const router = Router();
 
-// 👉 Queda en /api/proveedores
+// 👉 GET /api/proveedores
 router.get("/", getProveedores);
+
+// 👉 POST /api/proveedores/asignar
+router.post("/asignar", asignarProductosAProveedor);
 
 export default router;

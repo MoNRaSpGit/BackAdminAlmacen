@@ -36,3 +36,26 @@ export async function asignarProductosAProveedor(req, res) {
     res.status(500).json({ error: "Error al asignar productos" });
   }
 }
+
+
+// src/controllers/proveedoresController.js
+import { pool } from "../config/db.js";
+
+// Productos que aún no tienen proveedor
+export async function getProductosSinProveedor(req, res) {
+  try {
+    const [rows] = await pool.query(`
+      SELECT p.id, p.name, p.price, p.barcode, p.description
+      FROM productos_test p
+      LEFT JOIN productos_test_proveedores r
+        ON r.producto_id = p.id
+      WHERE r.producto_id IS NULL
+      ORDER BY p.name ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ Error consultando productos sin proveedor:", err);
+    res.status(500).json({ error: "Error al obtener productos sin proveedor" });
+  }
+}
+

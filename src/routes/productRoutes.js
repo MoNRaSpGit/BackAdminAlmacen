@@ -9,7 +9,7 @@ import {
    getProductByBarcode
 } from "../controllers/productController.js";
 
-import { getProveedores } from "../controllers/proveedoresController.js";
+
 
 
 const router = Router();
@@ -33,6 +33,6 @@ router.get("/not-updated", getNotUpdatedProducts);
 
 router.get("/by-barcode/:barcode", getProductByBarcode);
 
-router.get("/api/proveedores", getProveedores);
+
 
 export default router;

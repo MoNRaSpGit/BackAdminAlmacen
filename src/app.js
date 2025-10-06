@@ -1,22 +1,21 @@
 import express from "express";
 import cors from "cors";
-import pingRoutes from "./routes/pingRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import proveedorRoutes from "./routes/proveedorRoutes.js";
 
 const app = express();
 
+// middlewares
 app.use(cors());
 app.use(express.json());
 
-// ✅ Todas las rutas de productos empiezan con /api/products
+// ✅ Rutas
 app.use("/api/products", productRoutes);
+app.use("/api/proveedores", proveedorRoutes);
 
-// ✅ Ruta ping
-app.use("/api/ping", pingRoutes);
-
-// ✅ Ruta raíz
+// healthcheck opcional
 app.get("/", (req, res) => {
-  res.send("✅ API de BackAdminAlmacen funcionando");
+  res.send("✅ API de AdminAlmacén funcionando");
 });
 
 export default app;

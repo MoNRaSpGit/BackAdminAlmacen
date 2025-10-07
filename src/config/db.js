@@ -15,9 +15,10 @@ const base = {
 
 export const pool = mysql.createPool(base);
 
-// 🔹 Apenas se crea el pool, seteamos la zona horaria
-pool.query("SET time_zone = '-3:00'").catch(err => {
-  console.error("❌ No se pudo ajustar la zona horaria:", err.message);
+// 🔹 Ajustar zona horaria en cada conexión del pool
+pool.on("connection", (conn) => {
+  conn.query("SET time_zone = '-3:00'")
+    .catch(err => console.error("❌ No se pudo ajustar la zona horaria:", err.message));
 });
 
 export async function testConnection() {

@@ -15,11 +15,16 @@ const base = {
 
 export const pool = mysql.createPool(base);
 
+// 🔹 Apenas se crea el pool, seteamos la zona horaria
+pool.query("SET time_zone = '-3:00'").catch(err => {
+  console.error("❌ No se pudo ajustar la zona horaria:", err.message);
+});
+
 export async function testConnection() {
   const conn = await pool.getConnection();
   try {
-    await conn.ping(); // prueba rápida
-    console.log('✅ Conectado correctamente a MySQL');
+    await conn.ping();
+    console.log('✅ Conectado correctamente a MySQL (zona horaria -03:00)');
     return true;
   } catch (err) {
     console.error('❌ Error de conexión MySQL:', err.message);

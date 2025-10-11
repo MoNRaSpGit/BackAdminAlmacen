@@ -35,12 +35,12 @@ export async function getProducts(req, res) {
  */
 export async function updateProduct(req, res) {
   const { id } = req.params;
-  const { name, price } = req.body;
+  const { name, price, barcode } = req.body;
 
   try {
     // Traemos el producto actual
     const [rows] = await pool.query(
-      "SELECT name, price FROM productos_test WHERE id = ?",
+      "SELECT name, price, barcode FROM productos_test WHERE id = ?",
       [id]
     );
     if (rows.length === 0)
@@ -48,22 +48,29 @@ export async function updateProduct(req, res) {
 
     const current = rows[0];
 
-    // Si no llega name o price, usamos el actual
-    const newName = name || current.name;
-    const newPrice = price || current.price;
+    // Si no llega name, price o barcode, usamos el valor actual
+    const newName = name ?? current.name;
+    const newPrice = price ?? current.price;
+    const newBarcode = barcode ?? current.barcode;
 
-    await pool.query("UPDATE productos_test SET name=?, price=? WHERE id=?", [
-      newName,
-      newPrice,
-      id,
-    ]);
+    // Actualizamos los tres campos
+    await pool.query(
+      "UPDATE productos_test SET name = ?, price = ?, barcode = ? WHERE id = ?",
+      [newName, newPrice, newBarcode, id]
+    );
 
-    res.json({ id, name: newName, price: newPrice });
+    res.json({ id, name: newName, price: newPrice, barcode: newBarcode });
   } catch (err) {
     console.error("❌ Error actualizando producto (productos_test):", err);
-    res.status(500).json({ error: "Error al actualizar producto", details: err.message });
+    res
+      .status(500)
+      .json({
+        error: "Error al actualizar producto",
+        details: err.message,
+      });
   }
 }
+
 
 /**
  * Obtener productos con código de barra y precio > 500 o igual a 0

@@ -11,4 +11,6 @@ router.post("/asignar", asignarProductosAProveedor);
 
 router.get("/sin-proveedor", getProductosSinProveedor); // 👈 nuevo endpoint
 
+router.get("/:proveedorId/productos", getProductosPorProveedor);
+
 export default router;

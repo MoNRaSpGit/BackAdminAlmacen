@@ -58,3 +58,22 @@ export async function getProductosSinProveedor(req, res) {
 }
 
 
+export async function getProductosPorProveedor(req, res) {
+  const { proveedorId } = req.params;
+  try {
+    const [rows] = await pool.query(
+      `SELECT p.id, p.name, p.price, p.barcode, p.description
+       FROM productos_test p
+       INNER JOIN productos_test_proveedores r ON r.producto_id = p.id
+       WHERE r.proveedor_id = ?`,
+      [proveedorId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ Error consultando productos por proveedor:", err);
+    res.status(500).json({ error: "Error al obtener productos por proveedor" });
+  }
+}
+
+
+

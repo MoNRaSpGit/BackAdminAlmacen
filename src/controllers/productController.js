@@ -9,9 +9,9 @@ import { pool } from "../config/db.js";
 function normalizeText(text) {
   return text
     .toLowerCase()
-    .normalize("NFD")              // separa acentos
+    .normalize("NFD") // separa acentos
     .replace(/[\u0300-\u036f]/g, "") // borra acentos
-    .replace(/[^a-z0-9\s]/g, "")     // borra caracteres raros
+    .replace(/[^a-z0-9\s]/g, "") // borra caracteres raros
     .trim();
 }
 
@@ -20,9 +20,11 @@ function normalizeText(text) {
  */
 export async function getProducts(req, res) {
   try {
-    const [rows] = await pool.query(
-      "SELECT id, name, priceOriginal, price, barcode, description, status, updated_at FROM productos_test"
-    );
+    const [rows] = await pool.query(`
+      SELECT id, name, priceOriginal, price, barcode, description, status, updated_at 
+      FROM productos_test
+      ORDER BY name ASC
+    `);
     res.json(rows);
   } catch (err) {
     console.error("❌ Error consultando productos (productos_test):", err);
@@ -38,25 +40,28 @@ export async function updateProduct(req, res) {
   const { name, price, priceOriginal, barcode } = req.body;
 
   try {
-    // Traemos el producto actual
+    // Traer producto actual
     const [rows] = await pool.query(
       "SELECT name, price, priceOriginal, barcode FROM productos_test WHERE id = ?",
       [id]
     );
+
     if (rows.length === 0)
       return res.status(404).json({ error: "Producto no encontrado" });
 
     const current = rows[0];
 
-    // Si no llega algún campo, usamos el valor actual
+    // Mantener los valores existentes si no se envían
     const newName = name ?? current.name;
     const newPrice = price ?? current.price;
     const newPriceOriginal = priceOriginal ?? current.priceOriginal;
     const newBarcode = barcode ?? current.barcode;
 
-    // Actualizamos los campos
+    // Actualizar registro
     await pool.query(
-      "UPDATE productos_test SET name = ?, price = ?, priceOriginal = ?, barcode = ? WHERE id = ?",
+      `UPDATE productos_test 
+       SET name = ?, price = ?, priceOriginal = ?, barcode = ?, updated_at = NOW() 
+       WHERE id = ?`,
       [newName, newPrice, newPriceOriginal, newBarcode, id]
     );
 
@@ -81,13 +86,14 @@ export async function updateProduct(req, res) {
  */
 export async function getFilteredProducts(req, res) {
   try {
-    const [rows] = await pool.query(
-      `SELECT id, name, priceOriginal, price, barcode, description 
-       FROM productos_test
-       WHERE barcode IS NOT NULL 
-         AND TRIM(barcode) <> '' 
-         AND (price > 500 OR price = 0)`
-    );
+    const [rows] = await pool.query(`
+      SELECT id, name, priceOriginal, price, barcode, description 
+      FROM productos_test
+      WHERE barcode IS NOT NULL 
+        AND TRIM(barcode) <> '' 
+        AND (price > 500 OR price = 0)
+      ORDER BY name ASC
+    `);
     res.json(rows);
   } catch (err) {
     console.error("❌ Error consultando productos filtrados (productos_test):", err);
@@ -99,14 +105,16 @@ export async function getFilteredProducts(req, res) {
 }
 
 /**
- * Insertar producto nuevo
+ * Insertar producto nuevo (con priceOriginal)
  */
 export async function addProduct(req, res) {
   const { name, price, priceOriginal, barcode, description } = req.body;
 
   try {
     const [result] = await pool.query(
-      "INSERT INTO productos_test (name, priceOriginal, price, barcode, description) VALUES (?, ?, ?, ?, ?)",
+      `INSERT INTO productos_test 
+        (name, priceOriginal, price, barcode, description, updated_at)
+       VALUES (?, ?, ?, ?, ?, NOW())`,
       [name, priceOriginal || 0, price || 0, barcode || null, description || null]
     );
 
@@ -125,16 +133,17 @@ export async function addProduct(req, res) {
 }
 
 /**
- * Obtener productos que tienen código de barra
+ * Obtener productos con código de barra
  */
 export async function getProductsConBarcode(req, res) {
   try {
-    const [rows] = await pool.query(
-      `SELECT id, name, priceOriginal, price, barcode, description, status
-       FROM productos_test
-       WHERE barcode IS NOT NULL 
-         AND TRIM(barcode) <> ''`
-    );
+    const [rows] = await pool.query(`
+      SELECT id, name, priceOriginal, price, barcode, description, status
+      FROM productos_test
+      WHERE barcode IS NOT NULL 
+        AND TRIM(barcode) <> ''
+      ORDER BY name ASC
+    `);
     res.json(rows);
   } catch (err) {
     console.error("❌ Error consultando productos con código de barra (productos_test):", err);
@@ -143,7 +152,7 @@ export async function getProductsConBarcode(req, res) {
 }
 
 /**
- * Obtener productos NO actualizados (pero con código de barra)
+ * Obtener productos NO actualizados
  */
 export async function getNotUpdatedProducts(req, res) {
   try {
@@ -155,10 +164,10 @@ export async function getNotUpdatedProducts(req, res) {
           price = 999 
           OR price = 0 
           OR name LIKE '%(CH)%' 
-          OR name LIKE '%?%'        
+          OR name LIKE '%?%'
         )
         OR 
-        (barcode IS NULL OR TRIM(barcode) = '')  
+        (barcode IS NULL OR TRIM(barcode) = '')
       ORDER BY name ASC
     `);
     res.json(rows);
@@ -179,9 +188,8 @@ export async function getProductByBarcode(req, res) {
       [barcode]
     );
 
-    if (rows.length === 0) {
+    if (rows.length === 0)
       return res.status(404).json({ error: "Producto no encontrado" });
-    }
 
     res.json(rows[0]);
   } catch (err) {

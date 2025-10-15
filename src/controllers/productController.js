@@ -1,4 +1,6 @@
+import mysql from "mysql2/promise";
 import { pool } from "../config/db.js";
+import { DB } from "../config/env.js";
 
 /**
  * Normaliza un texto:
@@ -9,9 +11,9 @@ import { pool } from "../config/db.js";
 function normalizeText(text) {
   return text
     .toLowerCase()
-    .normalize("NFD") // separa acentos
-    .replace(/[\u0300-\u036f]/g, "") // borra acentos
-    .replace(/[^a-z0-9\s]/g, "") // borra caracteres raros
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
     .trim();
 }
 
@@ -33,26 +35,40 @@ export async function getProducts(req, res) {
 }
 
 /**
- * Actualizar producto (nombre, precios y código)
+ * 🔧 Actualizar producto (nombre, precios y código)
  */
 export async function updateProduct(req, res) {
-  const conn = await mysql.createConnection(DB);
-  try {
-    const { id } = req.params;
-    const { name, price, priceOriginal, barcode } = req.body;
+  const { id } = req.params;
+  const { name, price, priceOriginal, barcode } = req.body;
 
+  let conn;
+  try {
+    // Crear conexión directa (evita locks persistentes del pool)
+    conn = await mysql.createConnection(DB);
+
+    // Reducir tiempo de espera de locks
     await conn.query("SET innodb_lock_wait_timeout = 5");
+
+    // Ejecutar el update
     await conn.query(
-      "UPDATE productos_test SET name=?, price=?, priceOriginal=?, barcode=?, updated_at=NOW() WHERE id=?",
+      `UPDATE productos_test 
+       SET name = ?, 
+           price = ?, 
+           priceOriginal = ?, 
+           barcode = ?, 
+           updated_at = NOW() 
+       WHERE id = ?`,
       [name, price, priceOriginal, barcode, id]
     );
 
     res.json({ id, name, price, priceOriginal, barcode });
   } catch (err) {
-    console.error("❌ Error actualizando producto:", err);
-    res.status(500).json({ error: "Error al actualizar producto", details: err.message });
+    console.error("❌ Error actualizando producto (productos_test):", err);
+    res
+      .status(500)
+      .json({ error: "Error al actualizar producto", details: err.message });
   } finally {
-    await conn.end();
+    if (conn) await conn.end();
   }
 }
 
@@ -80,7 +96,7 @@ export async function getFilteredProducts(req, res) {
 }
 
 /**
- * Insertar producto nuevo (con priceOriginal)
+ * Insertar producto nuevo
  */
 export async function addProduct(req, res) {
   const { name, price, priceOriginal, barcode, description } = req.body;
@@ -159,7 +175,9 @@ export async function getProductByBarcode(req, res) {
   const { barcode } = req.params;
   try {
     const [rows] = await pool.query(
-      "SELECT id, name, priceOriginal, price, barcode, image, description FROM productos_test WHERE barcode = ?",
+      `SELECT id, name, priceOriginal, price, barcode, image, description 
+       FROM productos_test 
+       WHERE barcode = ?`,
       [barcode]
     );
 

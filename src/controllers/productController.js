@@ -23,16 +23,21 @@ function normalizeText(text) {
 export async function getProducts(req, res) {
   try {
     const [rows] = await pool.query(`
-      SELECT id, name, priceOriginal, price, barcode, description, status, updated_at 
-      FROM productos_test
-      ORDER BY name ASC
+      SELECT p.id, p.name, p.priceOriginal, p.price, p.barcode, p.description,
+             p.status, p.updated_at, p.last_checked_at,
+             pp.proveedor_id, pr.nombre AS proveedor_nombre
+      FROM productos_test p
+      LEFT JOIN proveedor_producto pp ON pp.producto_id = p.id
+      LEFT JOIN proveedores pr ON pr.id = pp.proveedor_id
+      ORDER BY p.name ASC
     `);
     res.json(rows);
   } catch (err) {
-    console.error("❌ Error consultando productos (productos_test):", err);
+    console.error("❌ Error consultando productos:", err);
     res.status(500).json({ error: "Error al obtener productos" });
   }
 }
+
 
 /**
  * 🔧 Actualizar producto (nombre, precios y código)
@@ -190,3 +195,23 @@ export async function getProductByBarcode(req, res) {
     res.status(500).json({ error: "Error al obtener producto por código" });
   }
 }
+
+export async function marcarProductoChequeado(req, res) {
+  const { id } = req.params;
+  try {
+    const [result] = await pool.query(
+      "UPDATE productos_test SET last_checked_at = NOW() WHERE id = ?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Producto no encontrado" });
+    }
+
+    res.json({ success: true, id, last_checked_at: new Date() });
+  } catch (err) {
+    console.error("❌ Error marcando producto como chequeado:", err);
+    res.status(500).json({ error: "Error al marcar producto" });
+  }
+}
+

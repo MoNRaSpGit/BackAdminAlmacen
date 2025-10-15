@@ -1,38 +1,53 @@
 import { pool } from "../config/db.js";
 
-async function actualizarPriceOriginal() {
-  console.log("🚀 Iniciando actualización de priceOriginal...");
+const BATCH_SIZE = 500; // 👈 cantidad de productos por tanda
+const FACTOR = 0.77; // 👈 23% menos
+const DELAY_MS = 2000; // 👈 pausa de 2 segundos entre tandas
 
-  const [rows] = await pool.query("SELECT id, price FROM productos_test WHERE price > 0");
-  const productos = rows;
-  console.log(`📦 Productos a procesar: ${productos.length}`);
-
-  let procesados = 0;
-
-  for (const prod of productos) {
-    const nuevoPriceOriginal = Math.round(prod.price * 0.77 * 100) / 100;
-
-    try {
-      await pool.query("UPDATE productos_test SET priceOriginal = ? WHERE id = ?", [
-        nuevoPriceOriginal,
-        prod.id,
-      ]);
-      procesados++;
-      if (procesados % 100 === 0) {
-        console.log(`✅ ${procesados} productos actualizados...`);
-        await new Promise((res) => setTimeout(res, 200)); // pausa corta
-      }
-    } catch (err) {
-      console.error(`❌ Error en producto ${prod.id}:`, err.message);
-    }
-  }
-
-  console.log(`🎯 Proceso finalizado. Total actualizados: ${procesados}`);
-  await pool.end();
-  process.exit(0);
+async function delay(ms) {
+  return new Promise((res) => setTimeout(res, ms));
 }
 
-actualizarPriceOriginal().catch((e) => {
-  console.error("❌ Error general:", e);
-  process.exit(1);
-});
+async function updatePorTandas() {
+  try {
+    // 1️⃣ obtenemos el total de productos
+    const [countRows] = await pool.query("SELECT COUNT(*) AS total FROM productos_test WHERE price > 0");
+    const total = countRows[0].total;
+    console.log(`📦 Total de productos a actualizar: ${total}`);
+
+    const tandas = Math.ceil(total / BATCH_SIZE);
+
+    for (let i = 0; i < tandas; i++) {
+      console.log(`\n🔄 Procesando tanda ${i + 1}/${tandas}...`);
+
+      const [rows] = await pool.query(
+        `SELECT id FROM productos_test WHERE price > 0 ORDER BY id ASC LIMIT ? OFFSET ?`,
+        [BATCH_SIZE, i * BATCH_SIZE]
+      );
+
+      if (rows.length === 0) break;
+
+      const ids = rows.map((r) => r.id);
+
+      await pool.query(
+        `UPDATE productos_test SET priceOriginal = ROUND(price * ?, 2) WHERE id IN (${ids.join(",")})`,
+        [FACTOR]
+      );
+
+      console.log(`✅ Tanda ${i + 1} completada (${ids.length} productos actualizados).`);
+
+      if (i < tandas - 1) {
+        console.log(`⏸️ Esperando ${DELAY_MS / 1000}s antes de continuar...`);
+        await delay(DELAY_MS);
+      }
+    }
+
+    console.log("\n🎯 Proceso completado con éxito.");
+    process.exit(0);
+  } catch (err) {
+    console.error("❌ Error durante la actualización:", err);
+    process.exit(1);
+  }
+}
+
+updatePorTandas();

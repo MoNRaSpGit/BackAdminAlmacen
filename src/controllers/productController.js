@@ -23,12 +23,21 @@ function normalizeText(text) {
 export async function getProducts(req, res) {
   try {
     const [rows] = await pool.query(`
-      SELECT p.id, p.name, p.priceOriginal, p.price, p.barcode, p.description,
-             p.status, p.updated_at, p.last_checked_at,
-             pp.proveedor_id, pr.nombre AS proveedor_nombre
+      SELECT 
+        p.id, 
+        p.name, 
+        p.priceOriginal, 
+        p.price, 
+        p.barcode, 
+        p.description,
+        p.status, 
+        p.updated_at, 
+        p.last_checked_at,
+        r.proveedor_id, 
+        pr.nombre AS proveedor_nombre
       FROM productos_test p
-      LEFT JOIN proveedor_producto pp ON pp.producto_id = p.id
-      LEFT JOIN proveedores pr ON pr.id = pp.proveedor_id
+      LEFT JOIN productos_test_proveedores r ON r.producto_id = p.id
+      LEFT JOIN proveedores pr ON pr.id = r.proveedor_id
       ORDER BY p.name ASC
     `);
     res.json(rows);
@@ -37,6 +46,7 @@ export async function getProducts(req, res) {
     res.status(500).json({ error: "Error al obtener productos" });
   }
 }
+
 
 
 /**

@@ -36,48 +36,23 @@ export async function getProducts(req, res) {
  * Actualizar producto (nombre, precios y código)
  */
 export async function updateProduct(req, res) {
-  const { id } = req.params;
-  const { name, price, priceOriginal, barcode } = req.body;
-
+  const conn = await mysql.createConnection(DB);
   try {
-    // Traer producto actual
-    const [rows] = await pool.query(
-      "SELECT name, price, priceOriginal, barcode FROM productos_test WHERE id = ?",
-      [id]
+    const { id } = req.params;
+    const { name, price, priceOriginal, barcode } = req.body;
+
+    await conn.query("SET innodb_lock_wait_timeout = 5");
+    await conn.query(
+      "UPDATE productos_test SET name=?, price=?, priceOriginal=?, barcode=?, updated_at=NOW() WHERE id=?",
+      [name, price, priceOriginal, barcode, id]
     );
 
-    if (rows.length === 0)
-      return res.status(404).json({ error: "Producto no encontrado" });
-
-    const current = rows[0];
-
-    // Mantener los valores existentes si no se envían
-    const newName = name ?? current.name;
-    const newPrice = price ?? current.price;
-    const newPriceOriginal = priceOriginal ?? current.priceOriginal;
-    const newBarcode = barcode ?? current.barcode;
-
-    // Actualizar registro
-    await pool.query(
-      `UPDATE productos_test 
-       SET name = ?, price = ?, priceOriginal = ?, barcode = ?, updated_at = NOW() 
-       WHERE id = ?`,
-      [newName, newPrice, newPriceOriginal, newBarcode, id]
-    );
-
-    res.json({
-      id,
-      name: newName,
-      price: newPrice,
-      priceOriginal: newPriceOriginal,
-      barcode: newBarcode,
-    });
+    res.json({ id, name, price, priceOriginal, barcode });
   } catch (err) {
-    console.error("❌ Error actualizando producto (productos_test):", err);
-    res.status(500).json({
-      error: "Error al actualizar producto",
-      details: err.message,
-    });
+    console.error("❌ Error actualizando producto:", err);
+    res.status(500).json({ error: "Error al actualizar producto", details: err.message });
+  } finally {
+    await conn.end();
   }
 }
 

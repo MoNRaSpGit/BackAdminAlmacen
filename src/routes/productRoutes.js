@@ -6,7 +6,8 @@ import {
   getProductsConBarcode,
   addProduct,
   getNotUpdatedProducts,
-   getProductByBarcode
+   getProductByBarcode,
+   marcarProductoChequeado
 } from "../controllers/productController.js";
 
 
@@ -34,6 +35,7 @@ router.get("/not-updated", getNotUpdatedProducts);
 router.get("/by-barcode/:barcode", getProductByBarcode);
 
 router.put("/:id/check", marcarProductoChequeado);
+
 
 
 

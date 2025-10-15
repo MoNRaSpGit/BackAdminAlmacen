@@ -206,8 +206,10 @@ export async function getProductByBarcode(req, res) {
   }
 }
 
+
 export async function marcarProductoChequeado(req, res) {
   const { id } = req.params;
+
   try {
     const [result] = await pool.query(
       "UPDATE productos_test SET last_checked_at = NOW() WHERE id = ?",
@@ -218,10 +220,14 @@ export async function marcarProductoChequeado(req, res) {
       return res.status(404).json({ error: "Producto no encontrado" });
     }
 
-    res.json({ success: true, id, last_checked_at: new Date() });
+    res.json({
+      id,
+      last_checked_at: new Date().toISOString(),
+      message: "Producto marcado como chequeado ✅"
+    });
   } catch (err) {
-    console.error("❌ Error marcando producto como chequeado:", err);
-    res.status(500).json({ error: "Error al marcar producto" });
+    console.error("❌ Error al marcar producto chequeado:", err);
+    res.status(500).json({ error: "Error al marcar producto chequeado" });
   }
 }
 

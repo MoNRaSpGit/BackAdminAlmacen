@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
-// Puerto
-export const PORT = Number(process.env.PORT || 3001);
+// Puerto (Render asigna dinámicamente el valor)
+export const PORT = process.env.PORT;
 
 // Soporte para varios orígenes CORS
 const origins =

@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import productRoutes from "./routes/productRoutes.js";
 import proveedorRoutes from "./routes/proveedorRoutes.js";
+import printRoutes from "./routes/printRoutes.js";
+
 
 
 
@@ -16,6 +18,8 @@ app.use(express.json());
 // ✅ Rutas
 app.use("/api/products", productRoutes);
 app.use("/api/proveedores", proveedorRoutes);
+app.use("/api", printRoutes);
+
 
 // healthcheck opcional
 app.get("/", (req, res) => {

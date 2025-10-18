@@ -61,60 +61,41 @@ export const ProductoModel = {
   /**
  * ✏️ Actualizar producto (nombre, precios, código y proveedor)
  */
-async update(id, { name, price, priceOriginal, barcode, proveedor_id }) {
-  const conn = await mysql.createConnection(DB);
-  try {
-    await conn.query("SET innodb_lock_wait_timeout = 5");
+  async update(id, { name, price, priceOriginal, barcode, proveedor_id }) {
+    const conn = await mysql.createConnection(DB);
+    try {
+      await conn.query("SET innodb_lock_wait_timeout = 5");
 
-    // 🔹 Actualizar producto principal
-    await conn.query(
-      `UPDATE productos_test 
-       SET name = ?, price = ?, priceOriginal = ?, barcode = ?, updated_at = NOW()
-       WHERE id = ?`,
-      [name, price, priceOriginal, barcode, id]
-    );
-
-    // 🔹 Si hay proveedor_id, actualizar o insertar la relación
-    if (proveedor_id) {
-      const [existe] = await conn.query(
-        `SELECT id FROM productos_test_proveedores WHERE producto_id = ?`,
-        [id]
+      // 🔹 1. Actualizamos el producto principal
+      await conn.query(
+        `UPDATE productos_test 
+         SET name=?, price=?, priceOriginal=?, barcode=?, updated_at=NOW()
+         WHERE id=?`,
+        [name, price, priceOriginal, barcode, id]
       );
 
-      if (existe.length > 0) {
-        // Ya existe → actualizar proveedor
+      // 🔹 2. Si vino un proveedor, actualizamos la tabla intermedia
+      if (proveedor_id) {
         await conn.query(
-          `UPDATE productos_test_proveedores 
-           SET proveedor_id = ?, fecha_precio = NOW() 
-           WHERE producto_id = ?`,
-          [proveedor_id, id]
-        );
-      } else {
-        // No existe → insertar nueva relación
-        await conn.query(
-          `INSERT INTO productos_test_proveedores (proveedor_id, producto_id, fecha_precio)
-           VALUES (?, ?, NOW())`,
-          [proveedor_id, id]
+          `INSERT INTO productos_test_proveedores (proveedor_id, producto_id, costo, fecha_precio)
+           VALUES (?, ?, ?, NOW())
+           ON DUPLICATE KEY UPDATE 
+             costo = VALUES(costo),
+             fecha_precio = NOW()`,
+          [proveedor_id, id, priceOriginal]
         );
       }
+
+      // ✅ 3. Devolvemos el resultado actualizado
+      return { id, name, price, priceOriginal, barcode, proveedor_id };
+    } catch (err) {
+      console.error("❌ Error en ProductoModel.update:", err);
+      throw err;
+    } finally {
+      await conn.end();
     }
+  },
 
-    // 🔹 Devolver producto actualizado con nombre de proveedor
-    const [[updated]] = await conn.query(
-      `SELECT p.*, pr.nombre AS proveedor_nombre, r.proveedor_id
-       FROM productos_test p
-       LEFT JOIN productos_test_proveedores r ON r.producto_id = p.id
-       LEFT JOIN proveedores pr ON pr.id = r.proveedor_id
-       WHERE p.id = ?`,
-      [id]
-    );
-
-    return updated;
-  } finally {
-    await conn.end();
-  }
-}
-,
 
   /**
    * ✅ Marcar producto como chequeado

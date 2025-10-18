@@ -55,46 +55,48 @@ export const ProductoModel = {
     };
   },
 
-  /**
-   * ✏️ Actualizar producto (nombre, precios, código)
-   */
-  /**
- * ✏️ Actualizar producto (nombre, precios, código y proveedor)
+ /**
+ * ✏️ Actualizar producto (nombre, precios, proveedor)
  */
-  async update(id, { name, price, priceOriginal, barcode, proveedor_id }) {
-    const conn = await mysql.createConnection(DB);
-    try {
-      await conn.query("SET innodb_lock_wait_timeout = 5");
+async update(id, { name, price, priceOriginal, barcode, proveedor_id }) {
+  const conn = await mysql.createConnection(DB);
+  try {
+    await conn.query("SET innodb_lock_wait_timeout = 5");
 
-      // 🔹 1. Actualizamos el producto principal
+    // 🔹 1. Actualizamos el producto principal
+    await conn.query(
+      `UPDATE productos_test 
+       SET name = ?, price = ?, priceOriginal = ?, barcode = ?, updated_at = NOW()
+       WHERE id = ?`,
+      [name, price, priceOriginal, barcode, id]
+    );
+
+    // 🔹 2. Si vino un proveedor, reemplazamos la relación anterior
+    if (proveedor_id) {
+      // 🧹 Borramos cualquier proveedor anterior del producto
       await conn.query(
-        `UPDATE productos_test 
-         SET name=?, price=?, priceOriginal=?, barcode=?, updated_at=NOW()
-         WHERE id=?`,
-        [name, price, priceOriginal, barcode, id]
+        "DELETE FROM productos_test_proveedores WHERE producto_id = ?",
+        [id]
       );
 
-      // 🔹 2. Si vino un proveedor, actualizamos la tabla intermedia
-      if (proveedor_id) {
-        await conn.query(
-          `INSERT INTO productos_test_proveedores (proveedor_id, producto_id, costo, fecha_precio)
-           VALUES (?, ?, ?, NOW())
-           ON DUPLICATE KEY UPDATE 
-             costo = VALUES(costo),
-             fecha_precio = NOW()`,
-          [proveedor_id, id, priceOriginal]
-        );
-      }
-
-      // ✅ 3. Devolvemos el resultado actualizado
-      return { id, name, price, priceOriginal, barcode, proveedor_id };
-    } catch (err) {
-      console.error("❌ Error en ProductoModel.update:", err);
-      throw err;
-    } finally {
-      await conn.end();
+      // 🆕 Insertamos el nuevo proveedor con su costo actual
+      await conn.query(
+        `INSERT INTO productos_test_proveedores (proveedor_id, producto_id, costo, fecha_precio)
+         VALUES (?, ?, ?, NOW())`,
+        [proveedor_id, id, priceOriginal]
+      );
     }
-  },
+
+    // ✅ 3. Devolvemos el resultado actualizado
+    return { id, name, price, priceOriginal, barcode, proveedor_id };
+  } catch (err) {
+    console.error("❌ Error en ProductoModel.update:", err);
+    throw err;
+  } finally {
+    await conn.end();
+  }
+},
+
 
 
   /**
